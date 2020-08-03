@@ -21,13 +21,11 @@ RUN apt-get install -y php-mysql
 RUN apt-get install wget
 RUN wget https://files.phpmyadmin.net/phpMyAdmin/5.0.2/phpMyAdmin-5.0.2-english.tar.gz -O - | tar -xz
 
-CMD cat /etc/nginx/nginx.conf
-CMD rm /etc/nginx/nginx.conf
-ADD ./srcs/nginx.conf /etc/nginx/
-CMD cat /etc/nginx/nginx.conf
+#ADD ./srcs/nginx.conf /etc/nginx/
+ADD ./srcs/startup.sh .
+ADD ./srcs/index.html /var/www/html/
 
-CMD ls /etc/nginx/
-
+CMD bash startup.sh
 #RUN add-apt-repository ppa:phpmyadmin/ppa
 
 #COPY static-html-directory /usr/share/nginx/html
@@ -50,16 +48,23 @@ CMD ls /etc/nginx/
 #unzip /var/www/html/latest.zip -d /var/www/html/ && \
 #rm -rf /var/www/html/latest.zip
 
-RUN echo "Hallo"
 
 # docker build . : om image aan te maken
+# docker build -t <naam> . : met naam
 # docker images : overzicht van gebouwde images
+
 # docker run -p 80:80 <id van de image> : om container te bouwen (port 80)
 # docker rmi <id van de image> : image verwijderen
 # docker container ls -a : overzicht containers
+
 # docker container rm <id> <id2> : containers met id en id2 verwijderen
 # docker stop <container id> : stop a container
 
 
 # 1. remove containers: docker rm $(docker ps -a -q)
 # 2. remove images: docker rmi -f $(docker images -q)
+
+############3#rondneuzen in mn container#################3
+
+# docker exec -it <naam container> bash
+# Nu zit je in de bash van je container, veel plezier! (je kunt geen vim gebruiken, dus gebruik cat als je een file wil zien
