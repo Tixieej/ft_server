@@ -3,31 +3,48 @@ FROM debian:buster
 
 MAINTAINER rde-vrie
 
-RUN apt-get update
+# Update & install
+RUN apt-get update && apt-get install -y \
+	nginx \
+	default-mysql-server \
+	php \
+	php-fpm \
+	php-mysql \
+	php-json \
+	php-mbstring \
+	wget \
+	openssl \
+	libnss3-tools
 
-CMD ["echo", "Hello World!"]
-
-#docker run nginx
-#generate new image:
-
-#FROM nginx : dit mag niet, je moet nginx downloaden alsof je het op een computer van debian buster download
-# -y zorgt dat hij accepteert dat het ruimte inneemt
-RUN apt-get install -y nginx
-CMD nginx -g 'daemon off;' 
-RUN apt-get install -y default-mysql-server
-RUN apt-get install -y php
-RUN apt-get install -y php-fpm
-RUN apt-get install -y php-mysql
-RUN apt-get install wget
+#CMD nginx -g 'daemon off;' 
 RUN wget https://files.phpmyadmin.net/phpMyAdmin/5.0.2/phpMyAdmin-5.0.2-english.tar.gz -O - | tar -xz
+RUN mv phpMyAdmin-5.0.2-english /usr/share/phpMyAdmin
+#RUN apt-get install -y openssl
 
 #ADD ./srcs/nginx.conf /etc/nginx/
+
+#Add files from srcs into container
 ADD ./srcs/startup.sh .
 ADD ./srcs/index.html /var/www/html/
+ADD ./srcs/containerfiles/default /etc/nginx/sites-enabled/
+ADD ./srcs/phpMyAdmin.conf /etc/nginx/conf.d/
+ADD ./srcs/containerfiles/config.inc.php /usr/share/phpMyAdmin/
+
+# download fake certificate for SSL
+#RUN wget -O mkcert https://github.com/FiloSottile/mkcert/releases/download/v1.4.1/mkcert-v1.4.1-linux-armi
+RUN wget -O mkcert https://github.com/FiloSottile/mkcert/releases/download/v1.4.1/mkcert-v1.4.1-linux-arm
+#RUN mv mkcert-v1.4.1-linux-arm mkcert
+RUN chmod +x mkcert
+RUN mv mkcert /usr/local/bin/
+RUN /usr/local/bin/mkcert -install 
+RUN /usr/local/bin/mkcert localhost
+#RUN mv localhost.pem /root/
+#RUN mv localhost-key.pem /root/
+
+
 
 CMD bash startup.sh
 #RUN add-apt-repository ppa:phpmyadmin/ppa
-
 #COPY static-html-directory /usr/share/nginx/html
 
 #dit zorgt ervoor dat het opstart
@@ -50,10 +67,11 @@ CMD bash startup.sh
 
 
 # docker build . : om image aan te maken
-# docker build -t <naam> . : met naam
+# docker build -t <naam> . : maak image en geef het een naam
 # docker images : overzicht van gebouwde images
 
 # docker run -p 80:80 <id van de image> : om container te bouwen (port 80)
+# docker run -p 80:80 -p 443:443 <id image>
 # docker rmi <id van de image> : image verwijderen
 # docker container ls -a : overzicht containers
 
