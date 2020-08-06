@@ -18,7 +18,7 @@ RUN apt-get update && apt-get install -y \
 
 #CMD nginx -g 'daemon off;' 
 RUN wget https://files.phpmyadmin.net/phpMyAdmin/5.0.2/phpMyAdmin-5.0.2-english.tar.gz -O - | tar -xz
-RUN mv phpMyAdmin-5.0.2-english /usr/share/phpMyAdmin
+RUN mv phpMyAdmin-5.0.2-english /var/www/html/phpmyadmin
 #RUN apt-get install -y openssl
 
 #ADD ./srcs/nginx.conf /etc/nginx/
@@ -27,11 +27,41 @@ RUN mv phpMyAdmin-5.0.2-english /usr/share/phpMyAdmin
 ADD ./srcs/startup.sh .
 ADD ./srcs/index.html /var/www/html/
 ADD ./srcs/containerfiles/default /etc/nginx/sites-enabled/
-ADD ./srcs/phpMyAdmin.conf /etc/nginx/conf.d/
-ADD ./srcs/containerfiles/config.inc.php /usr/share/phpMyAdmin/
+ADD ./srcs/phpMyAdmin.conf /var/www/html/
+
+#/etc/nginx/conf.d/
+ADD ./srcs/containerfiles/config.inc.php /var/www/html/phpmyadmin/
+
+
+# Configure the database.//dit stuk is compleet van mark
+RUN service mysql start && \
+	mysql -e "UPDATE mysql.user SET Password=PASSWORD('hello') WHERE User='root'" && \
+	mysql -e "DELETE FROM mysql.user WHERE User=''" && \
+	mysql -e "DELETE FROM mysql.user WHERE User-'root' AND Host NOT IN \
+				('localhost', '127.0.0.1', '::1')" && \
+	mysql -e "FLUSH PRIVILEGES"
+
+# Make a new user for phpMyAdmin, and create the configuration storage tables.
+RUN service mysql start && \
+	mysql -e "CREATE USER 'rde-vrie'@'localhost' IDENTIFIED BY 'hello'" && \
+	mysql -e "GRANT ALL PRIVILEGES ON * . * TO 'rde-vrie'@'localhost'" && \
+	mysql -e "FLUSH PRIVILEGES" && \
+	mysql -e "CREATE DATABASE phpmyadmin" && \
+	mysql phpmyadmin < /var/www/html/phpmyadmin/sql/create_tables.sql
+
+
+#start mysql and make user:
+#RUN service mysql start && \
+#	mysql -u root && \
+#	mysql -e "CREATE DATABASE phpmyadmin" && \
+#	mysql -e "GRANT ALL PRIVILEGES ON phpmyadmin.* TO 'pma'@'localhost' IDENTIFIED BY 'pmapass';" && \
+#	#mysql -e "CREATE USER 'rixt'@'localhost' IDENTIFIED BY 'hello';" && \
+#	mysql phpmyadmin < /usr/share/phpMyAdmin/sql/create_tables.sql && \
+	#mysql -u root -e "GRANT ALL PRIVILEGES ON phpmyadmin.* TO 'rixt'@'localhost' IDENTIFIED BY 'hello';" && \
+	#mysql -u root -e "FLUSH PRIVILEGES;"
+
 
 # download fake certificate for SSL
-#RUN wget -O mkcert https://github.com/FiloSottile/mkcert/releases/download/v1.4.1/mkcert-v1.4.1-linux-armi
 RUN wget -O mkcert https://github.com/FiloSottile/mkcert/releases/download/v1.4.1/mkcert-v1.4.1-linux-arm
 #RUN mv mkcert-v1.4.1-linux-arm mkcert
 RUN chmod +x mkcert
@@ -48,8 +78,8 @@ CMD bash startup.sh
 #COPY static-html-directory /usr/share/nginx/html
 
 #dit zorgt ervoor dat het opstart
-#docker build .
-#docker run --name rixt -p 80:80 <image id>
+#docker build -t <name> .
+#docker run --rm --name rixt -p 80:80 <image id>
 
 #ENV MYSQL_SERVER localhost
 #ENV MYSQL_CLIENT localhost
@@ -71,7 +101,7 @@ CMD bash startup.sh
 # docker images : overzicht van gebouwde images
 
 # docker run -p 80:80 <id van de image> : om container te bouwen (port 80)
-# docker run -p 80:80 -p 443:443 <id image>
+# docker run --rm -it --name -p 80:80 -p 443:443 <id image>
 # docker rmi <id van de image> : image verwijderen
 # docker container ls -a : overzicht containers
 

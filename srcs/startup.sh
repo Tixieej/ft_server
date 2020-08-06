@@ -17,7 +17,12 @@ echo -e "${RED}"
 # Generate keys for SSL certificate
 #cd /etc/ssl/certs/
 #openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout localhost.key -out localhost.crt 
-
+#
+#service mysql start
+#mysql < /usr/share/phpMyAdmin/sql/create_tables.sql -u root -p
+#mysql -u root -p
+#mysql -u root -p -e "GRANT ALL PRIVILEGES ON phpmyadmin.* TO 'pma'@'localhost' IDENTIFIED BY 'pmapass';"
+#mysql -u root -p -e "FLUSH PRIVILEGES;"
 nginx -g 'daemon off;'
 
 
