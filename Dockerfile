@@ -7,10 +7,14 @@ MAINTAINER rde-vrie
 RUN apt-get update && apt-get install -y \
 	nginx \
 	default-mysql-server \
-	php \
-	php-fpm \
+	php7.3 \
+	php7.3-fpm \
 	php-mysql \
 	php-json \
+	php-cli \
+	php-zip \
+	php-cgi \
+	php-pear \
 	php-mbstring \
 	wget \
 	openssl \
@@ -19,19 +23,26 @@ RUN apt-get update && apt-get install -y \
 #CMD nginx -g 'daemon off;' 
 RUN wget https://files.phpmyadmin.net/phpMyAdmin/5.0.2/phpMyAdmin-5.0.2-english.tar.gz -O - | tar -xz
 RUN mv phpMyAdmin-5.0.2-english /var/www/html/phpmyadmin
-#RUN apt-get install -y openssl
+RUN mkdir /var/www/html/phpmyadmin/tmp
+RUN chmod 755 /var/www/html/phpmyadmin/tmp
 
-#ADD ./srcs/nginx.conf /etc/nginx/
+#Wordpress
+RUN wget https://wordpress.org/latest.tar.gz -P /tmp
+RUN mkdir /var/www/html/wordpress
+RUN tar xzf /tmp/latest.tar.gz --strip-components=1 -C /var/www/html/wordpress
 
 #Add files from srcs into container
-ADD ./srcs/startup.sh .
-ADD ./srcs/index.html /var/www/html/
-ADD ./srcs/containerfiles/default /etc/nginx/sites-enabled/
-ADD ./srcs/phpMyAdmin.conf /var/www/html/
+COPY ./srcs/startup.sh .
+COPY ./srcs/index.html /var/www/html/
+COPY ./srcs/containerfiles/default /etc/nginx/sites-available/
+COPY ./srcs/phpMyAdmin.conf /etc/nginx/conf.d/
+COPY ./srcs/containerfiles/wp-config.php /var/www/html/wordpress/
+COPY ./srcs/containerfiles/config.inc.php /var/www/html/phpmyadmin/
 
-#/etc/nginx/conf.d/
-ADD ./srcs/containerfiles/config.inc.php /var/www/html/phpmyadmin/
-
+#Set owner of folder to www-data
+RUN chown -R www-data /var/www/html/wordpress
+RUN chown -R www-data:www-data /var/www/html/phpmyadmin/tmp
+RUN chown -R www-data /var/www/html/
 
 # Configure the database.//dit stuk is compleet van mark
 RUN service mysql start && \
@@ -44,10 +55,11 @@ RUN service mysql start && \
 # Make a new user for phpMyAdmin, and create the configuration storage tables.
 RUN service mysql start && \
 	mysql -e "CREATE USER 'rde-vrie'@'localhost' IDENTIFIED BY 'hello'" && \
-	mysql -e "GRANT ALL PRIVILEGES ON * . * TO 'rde-vrie'@'localhost'" && \
+	mysql -e "GRANT ALL PRIVILEGES ON * . * TO 'rde-vrie'@'localhost' IDENTIFIED BY 'hello';" && \
 	mysql -e "FLUSH PRIVILEGES" && \
 	mysql -e "CREATE DATABASE phpmyadmin" && \
-	mysql phpmyadmin < /var/www/html/phpmyadmin/sql/create_tables.sql
+	mysql phpmyadmin < /var/www/html/phpmyadmin/sql/create_tables.sql && \
+	mysql -e "CREATE DATABASE wordpress"
 
 
 #start mysql and make user:
@@ -70,7 +82,6 @@ RUN /usr/local/bin/mkcert -install
 RUN /usr/local/bin/mkcert localhost
 #RUN mv localhost.pem /root/
 #RUN mv localhost-key.pem /root/
-
 
 
 CMD bash startup.sh
