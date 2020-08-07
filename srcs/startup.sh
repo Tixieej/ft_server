@@ -9,16 +9,13 @@ DEFAULT="\033[39m"
 LIME="\033[38;5;154m"
 PURPLE="\033[38;5;183m"
 
-echo -e "${LIME}Hello, world!${DEFAULT}"
-echo -e "${PURPLE}Hello, Rixt.${GREEN}"
-ls /etc/nginx/
-echo -e "${RED}"
+#echo -e "${LIME}Hello, world!${DEFAULT}"
+#echo -e "${PURPLE}Hello, Rixt.${GREEN}"
+#ls /etc/nginx/
+#echo -e "${RED}"
 
 service php7.3-fpm start
 service mysql start
-
-
-
 nginx -g 'daemon off;'
 
 

@@ -18,7 +18,8 @@ RUN apt-get update && apt-get install -y \
 	php-mbstring \
 	wget \
 	openssl \
-	libnss3-tools
+	libnss3-tools \
+	sudo
 
 #CMD nginx -g 'daemon off;' 
 RUN wget https://files.phpmyadmin.net/phpMyAdmin/5.0.2/phpMyAdmin-5.0.2-english.tar.gz -O - | tar -xz
@@ -39,10 +40,8 @@ COPY ./srcs/phpMyAdmin.conf /etc/nginx/conf.d/
 COPY ./srcs/containerfiles/wp-config.php /var/www/html/wordpress/
 COPY ./srcs/containerfiles/config.inc.php /var/www/html/phpmyadmin/
 
-#Set owner of folder to www-data
-RUN chown -R www-data /var/www/html/wordpress
-RUN chown -R www-data:www-data /var/www/html/phpmyadmin/tmp
-RUN chown -R www-data /var/www/html/
+RUN chmod 755 /var/www/html/wordpress/wp-config.php
+
 
 # Configure the database.//dit stuk is compleet van mark
 RUN service mysql start && \
@@ -61,28 +60,26 @@ RUN service mysql start && \
 	mysql phpmyadmin < /var/www/html/phpmyadmin/sql/create_tables.sql && \
 	mysql -e "CREATE DATABASE wordpress"
 
-
-#start mysql and make user:
-#RUN service mysql start && \
-#	mysql -u root && \
-#	mysql -e "CREATE DATABASE phpmyadmin" && \
-#	mysql -e "GRANT ALL PRIVILEGES ON phpmyadmin.* TO 'pma'@'localhost' IDENTIFIED BY 'pmapass';" && \
-#	#mysql -e "CREATE USER 'rixt'@'localhost' IDENTIFIED BY 'hello';" && \
-#	mysql phpmyadmin < /usr/share/phpMyAdmin/sql/create_tables.sql && \
-	#mysql -u root -e "GRANT ALL PRIVILEGES ON phpmyadmin.* TO 'rixt'@'localhost' IDENTIFIED BY 'hello';" && \
-	#mysql -u root -e "FLUSH PRIVILEGES;"
-
-
-# download fake certificate for SSL
+# download certificate for SSL
 RUN wget -O mkcert https://github.com/FiloSottile/mkcert/releases/download/v1.4.1/mkcert-v1.4.1-linux-arm
-#RUN mv mkcert-v1.4.1-linux-arm mkcert
 RUN chmod +x mkcert
 RUN mv mkcert /usr/local/bin/
 RUN /usr/local/bin/mkcert -install 
 RUN /usr/local/bin/mkcert localhost
-#RUN mv localhost.pem /root/
-#RUN mv localhost-key.pem /root/
 
+# Configure Wordpress
+RUN adduser --disabled-password -gecos "" rde-vrie && \
+	sudo adduser rde-vrie sudo
+RUN wget -O wp-cli.phar https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar
+RUN chmod +x wp-cli.phar
+RUN mv wp-cli.phar /usr/local/bin/wp
+RUN chown rde-vrie -R /var/www
+RUN service mysql start && \
+	sudo -u rde-vrie -i -- wp core install --url=localhost --title="wordpress" --admin_name=rde-vrie --admin_password=hello --admin_email=rde-vrie@example.com --path=/var/www/html/wordpress
+
+#Set owner of folder to www-data
+RUN chown -R www-data:www-data /var/www/
+RUN rm -r /var/www/html/index.nginx-debian.html
 
 CMD bash startup.sh
 #RUN add-apt-repository ppa:phpmyadmin/ppa
