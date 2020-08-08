@@ -41,12 +41,12 @@ RUN tar xzf /tmp/latest.tar.gz --strip-components=1 -C /var/www/html
 #Add files from srcs into container
 COPY ./srcs/startup.sh .
 COPY ./srcs/index.html /var/www/html/
-COPY ./srcs/containerfiles/default /etc/nginx/sites-available/
+COPY ./srcs/default /etc/nginx/sites-available/
 COPY ./srcs/phpMyAdmin.conf /etc/nginx/conf.d/
-COPY ./srcs/containerfiles/wp-config.php /var/www/html/
-COPY ./srcs/containerfiles/config.inc.php /var/www/html/phpmyadmin/
-COPY ./srcs/containerfiles/php.ini /etc/php/7.3/fpm/
-COPY ./srcs/containerfiles/nginx.conf /etc/nginx/
+COPY ./srcs/wp-config.php /var/www/html/
+COPY ./srcs/config.inc.php /var/www/html/phpmyadmin/
+COPY ./srcs/php.ini /etc/php/7.3/fpm/
+COPY ./srcs/nginx.conf /etc/nginx/
 
 RUN chmod 755 /var/www/html/wp-config.php
 
@@ -90,42 +90,3 @@ RUN chown -R www-data:www-data /var/www/
 RUN rm -r /var/www/html/index.nginx-debian.html
 
 CMD bash startup.sh
-#RUN add-apt-repository ppa:phpmyadmin/ppa
-#COPY static-html-directory /usr/share/nginx/html
-
-#dit zorgt ervoor dat het opstart
-#docker build -t <name> .
-#docker run --rm --name rixt -p 80:80 <image id>
-
-#ENV MYSQL_SERVER localhost
-#ENV MYSQL_CLIENT localhost
-#ENV MYSQL_USER root
-#ENV MYSQl_PASS password
-#ENV MYSQL_DB wordpress
-#ENV APP_USER admin
-#ENV APP_PASS password
-#ENV WP_KEY "Hello World"
-
-
-
-
-# docker build . : om image aan te maken
-# docker build -t <naam> . : maak image en geef het een naam
-# docker images : overzicht van gebouwde images
-
-# docker run -p 80:80 <id van de image> : om container te bouwen (port 80)
-# docker run --rm -it --name -p 80:80 -p 443:443 <id image>
-# docker rmi <id van de image> : image verwijderen
-# docker container ls -a : overzicht containers
-
-# docker container rm <id> <id2> : containers met id en id2 verwijderen
-# docker stop <container id> : stop a container
-
-
-# 1. remove containers: docker rm $(docker ps -a -q)
-# 2. remove images: docker rmi -f $(docker images -q)
-
-############3#rondneuzen in mn container#################3
-
-# docker exec -it <naam container> bash
-# Nu zit je in de bash van je container, veel plezier! (je kunt geen vim gebruiken, dus gebruik cat als je een file wil zien
