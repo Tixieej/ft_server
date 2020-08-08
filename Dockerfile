@@ -5,6 +5,7 @@ MAINTAINER rde-vrie
 
 # Update & install
 RUN apt-get update && apt-get install -y \
+	#apt-utils \
 	nginx \
 	default-mysql-server \
 	php7.3 \
@@ -16,13 +17,15 @@ RUN apt-get update && apt-get install -y \
 	php-cgi \
 	php-pear \
 	php-mbstring \
+	php-gd \
+	php-imagick \
 	wget \
 	openssl \
 	libnss3-tools \
 	sudo \
-	gd \
+	sendmail \
 	curl \
-	imagick
+	vim 
 
 #CMD nginx -g 'daemon off;' 
 RUN wget https://files.phpmyadmin.net/phpMyAdmin/5.0.2/phpMyAdmin-5.0.2-english.tar.gz -O - | tar -xz
@@ -42,6 +45,8 @@ COPY ./srcs/containerfiles/default /etc/nginx/sites-available/
 COPY ./srcs/phpMyAdmin.conf /etc/nginx/conf.d/
 COPY ./srcs/containerfiles/wp-config.php /var/www/html/
 COPY ./srcs/containerfiles/config.inc.php /var/www/html/phpmyadmin/
+COPY ./srcs/containerfiles/php.ini /etc/php/7.3/fpm/
+COPY ./srcs/containerfiles/nginx.conf /etc/nginx/
 
 RUN chmod 755 /var/www/html/wp-config.php
 
@@ -101,10 +106,7 @@ CMD bash startup.sh
 #ENV APP_PASS password
 #ENV WP_KEY "Hello World"
 
-# grab the latest wordpress, install it and remove the zip file
-#RUN wget -P /var/www/html/ https://wordpress.org/latest.zip && \
-#unzip /var/www/html/latest.zip -d /var/www/html/ && \
-#rm -rf /var/www/html/latest.zip
+
 
 
 # docker build . : om image aan te maken
